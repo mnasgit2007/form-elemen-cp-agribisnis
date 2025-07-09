@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir ke Word/PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        @media (max-width: 600px) {
+            .form-container {
+                padding: 15px;
+            }
+            button {
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Formulir Data</h2>
+        <form id="dataForm">
+            <label for="name">Nama:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="message">Pesan:</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+
+            <button type="button" onclick="downloadPDF()">Unduh PDF</button>
+            <button type="button" onclick="downloadWord()">Unduh Word</button>
+        </form>
+    </div>
+
+    <!-- Library untuk PDF dan Word -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplator/3.37.12/docxtemplator.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPDF/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        // Fungsi untuk mengunduh PDF
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            doc.setFontSize(16);
+            doc.text("Formulir Data", 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Nama: ${name}`, 20, 40);
+            doc.text(`Email: ${email}`, 20, 50);
+            doc.text(`Pesan: ${message}`, 20, 60, { maxWidth: 170 });
+
+            doc.save('formulir.pdf');
+        }
+
+        // Fungsi untuk mengunduh Word
+        function downloadWord() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            // Template untuk dokumen Word
+            const template = `
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                    <w:body>
+                        <w:p>
+                            <w:r>
+                                <w:t>Formulir Data</w:t>
+                            </w:r>
+                        </w:p>
+                        <w:p>
+                            <w:r>
+                                <w:t>Nama: ${name}</w:t>
+                            </w:r>
+                        </w:p>
+                        <w:p>
+                            <w:r>
+                                <w:t>Email: ${email}</w:t>
+                            </w:r>
+                        </w:p>
+                        <w:p>
+                            <w:r>
+                                <w:t>Pesan: ${message}</w:t>
+                            </w:r>
+                        </w:p>
+                    </w:body>
+                </w:document>`;
+
+            // Membuat file .docx menggunakan JSZip
+            const zip = new JSZip();
+
+            // Struktur file .docx
+            zip.file("word/document.xml", template);
+            zip.file("[Content_Types].xml", `
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+                    <Default Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+                    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+                </Types>`);
+            zip.file("_rels/.rels", `
+                <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+                    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+                </Relationships>`);
+
+            // Generate file .docx
+            zip.generateAsync({
+                type: "blob",
+                mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            }).then(function (blob) {
+                saveAs(blob, "formulir.docx");
+            });
+        }
+    </script>
+</body>
+</html>
